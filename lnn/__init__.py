@@ -25,6 +25,7 @@ from .symbolic.logic import (
     Implies,
     NeuralActivation,
     Not,
+    High,
     Or,
     Proposition,
     Propositions,
