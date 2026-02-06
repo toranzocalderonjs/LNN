@@ -53,6 +53,7 @@ __all__ = [
     "Exists",
     "Forall",
     "Formula",
+    "High",
     "Implies",
     "NeuralActivation",
     "Not",

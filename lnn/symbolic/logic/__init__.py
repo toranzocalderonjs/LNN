@@ -6,7 +6,7 @@ from .leaf_formula import _LeafFormula, Predicate, Predicates, Proposition, Prop
 from .n_ary_neuron import And, Or, XOr
 from .n_ary_operator import Congruent
 from .neural_activation import NeuralActivation
-from .unary_operator import _Quantifier, Exists, Forall, Not
+from .unary_operator import _Quantifier, Exists, Forall, Not, High
 from .variable import Variable, Variables
 
 from . import formula as _formula
@@ -28,6 +28,7 @@ _formula.subclasses = {
     "Forall": Forall,
     "Implies": Implies,
     "Not": Not,
+    "High": High,
     "Or": Or,
     "Predicate": Predicate,
     "Proposition": Proposition,
@@ -55,6 +56,7 @@ __all__ = [
     "Implies",
     "NeuralActivation",
     "Not",
+    "High",
     "Or",
     "Proposition",
     "Propositions",

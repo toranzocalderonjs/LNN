@@ -608,6 +608,9 @@ class Formula(ABC):
     def Not(self, **kwds) -> "Not":
         return subclasses["Not"](*self._formula_vars(self), **kwds)
 
+    def High(self, **kwds) -> "High":
+        return subclasses["High"](*self._formula_vars(self), **kwds)
+
     def Iff(self, formula: "Formula", **kwds) -> "Iff":
         return subclasses["Iff"](*self._formula_vars(self, formula), **kwds)
 
