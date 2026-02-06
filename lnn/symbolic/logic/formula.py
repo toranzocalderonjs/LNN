@@ -768,57 +768,81 @@ class Formula(ABC):
                     root_var_remap = dict(
                         (
                             (
-                                subformula.unique_vars[i],
-                                root_var_remap[subformula_vars[i]],
+                                (
+                                    subformula.unique_vars[i],
+                                    root_var_remap[subformula_vars[i]],
+                                )
+                                if subformula.unique_vars[i] != subformula_vars[i]
+                                else (subformula_vars[i], subformula_vars[i])
                             )
-                            if subformula.unique_vars[i] != subformula_vars[i]
-                            else (subformula_vars[i], subformula_vars[i])
                             for i in range(len(subformula_vars))
                         )
                     )
             result = [
                 (
-                    f"{f.name}("
-                    + _utils.list_to_str(
-                        [
-                            root_var_remap[v]
-                            if not as_int
-                            else subformula.unique_var_map[root_var_remap[v]]
-                            if _isinstance(subformula, "_Quantifier")
-                            else self.unique_var_map[root_var_remap[v]]
-                            for v in [
-                                subformula.expanded_unique_vars[_]
-                                if _isinstance(subformula, "_Quantifier")
-                                else subformula.unique_vars[_]
-                                for _ in subformula.operand_map[i]
+                    (
+                        f"{f.name}("
+                        + _utils.list_to_str(
+                            [
+                                (
+                                    root_var_remap[v]
+                                    if not as_int
+                                    else (
+                                        subformula.unique_var_map[root_var_remap[v]]
+                                        if _isinstance(subformula, "_Quantifier")
+                                        else self.unique_var_map[root_var_remap[v]]
+                                    )
+                                )
+                                for v in [
+                                    (
+                                        subformula.expanded_unique_vars[_]
+                                        if _isinstance(subformula, "_Quantifier")
+                                        else subformula.unique_vars[_]
+                                    )
+                                    for _ in subformula.operand_map[i]
+                                ]
                             ]
-                        ]
-                        if subformula.operand_map[i]
-                        else []
+                            if subformula.operand_map[i]
+                            else []
+                        )
+                        + ")"
                     )
-                    + ")"
-                )
-                if _isinstance(f, "Predicate")
-                else f"{f.name}"
-                if _isinstance(f, "Proposition")
-                else f"{f.structure}"
-                if _isinstance(f, "_Quantifier")
-                else (
-                    "("
-                    + subformula_structure(
-                        f, f.connective_str, subformula.var_remap[i], root_var_remap
+                    if _isinstance(f, "Predicate")
+                    else (
+                        f"{f.name}"
+                        if _isinstance(f, "Proposition")
+                        else (
+                            f"{f.structure}"
+                            if _isinstance(f, "_Quantifier")
+                            else (
+                                (
+                                    "("
+                                    + subformula_structure(
+                                        f,
+                                        f.connective_str,
+                                        subformula.var_remap[i],
+                                        root_var_remap,
+                                    )
+                                    + ")"
+                                )
+                                if _isinstance(f, "_ConnectiveNeuron")
+                                else (
+                                    (
+                                        f"{f.connective_str}"
+                                        + subformula_structure(
+                                            f,
+                                            None,
+                                            subformula.var_remap[i],
+                                            root_var_remap,
+                                        )
+                                    )
+                                    if _isinstance(f, "Not") or _isinstance(f, "High")
+                                    else ""
+                                )
+                            )
+                        )
                     )
-                    + ")"
                 )
-                if _isinstance(f, "_ConnectiveNeuron")
-                else (
-                    f"{f.connective_str}"
-                    + subformula_structure(
-                        f, None, subformula.var_remap[i], root_var_remap
-                    )
-                )
-                if _isinstance(f, "Not")
-                else ""
                 for i, f in enumerate(subformula.operands)
             ]
             return f" {operator} ".join(result) if operator else "".join(result)
@@ -838,15 +862,23 @@ class Formula(ABC):
                 if self.propositional
                 else f"{self.connective_str}{subformula_structure(self)}"
             )
-        return (
-            (
-                "("
-                + f" {self.connective_str} ".join([get_str(f) for f in self.operands])
-                + ")"
+        elif _isinstance(self, "High"):
+            return (
+                f"{self.connective_str}{get_str(self.operands[0])}"
+                if self.propositional
+                else f"{self.connective_str}{subformula_structure(self)}"
             )
-            if self.propositional
-            else f"({subformula_structure(self, self.connective_str)})"
-        )
+            return (
+                (
+                    "("
+                    + f" {self.connective_str} ".join(
+                        [get_str(f) for f in self.operands]
+                    )
+                    + ")"
+                )
+                if self.propositional
+                else f"({subformula_structure(self, self.connective_str)})"
+            )
 
     @staticmethod
     def _formula_vars(*formulae: "Formula") -> List[Union["Formula", Tuple]]:
@@ -857,9 +889,11 @@ class Formula(ABC):
             Variable(f"?{i}") for i in range(max([f.arity for f in formulae]))
         )
         return [
-            f(*variables[: f.arity])
-            if (not f.propositional and _isinstance(f, "Predicate"))
-            else f
+            (
+                f(*variables[: f.arity])
+                if (not f.propositional and _isinstance(f, "Predicate"))
+                else f
+            )
             for f in formulae
         ]
 
@@ -1050,9 +1084,11 @@ class Formula(ABC):
         for op_idx in range(len(self.var_remap)):
             if self.var_remap[op_idx]:
                 op_map = [
-                    self.unique_vars.index(op_var)
-                    if op_var in self.unique_vars
-                    else self.variables.index(op_var) + len(self.unique_vars)
+                    (
+                        self.unique_vars.index(op_var)
+                        if op_var in self.unique_vars
+                        else self.variables.index(op_var) + len(self.unique_vars)
+                    )
                     for op_var in self.var_remap[op_idx]
                 ]
                 self.operand_map[op_idx] = tuple(op_map)

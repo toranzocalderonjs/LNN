@@ -60,9 +60,11 @@ class _Quantifier(_UnaryOperator):
         variables = (
             args[:-1]
             if len(args) > 1
-            else args[-1][0].unique_vars
-            if isinstance(args[-1], tuple)
-            else args[-1].unique_vars
+            else (
+                args[-1][0].unique_vars
+                if isinstance(args[-1], tuple)
+                else args[-1].unique_vars
+            )
         )
         super().__init__(args[-1], variables=variables, **kwds)
         self.fully_grounded = kwds.get("fully_grounded", False)
@@ -464,9 +466,11 @@ class Exists(_Quantifier):
         variables = (
             args[:-1]
             if len(args) > 1
-            else args[-1][0].unique_vars
-            if isinstance(args[-1], tuple)
-            else args[-1].unique_vars
+            else (
+                args[-1][0].unique_vars
+                if isinstance(args[-1], tuple)
+                else args[-1].unique_vars
+            )
         )
 
         a = variables[0]
@@ -513,9 +517,11 @@ class Forall(_Quantifier):
         variables = (
             args[:-1]
             if len(args) > 1
-            else args[-1][0].unique_vars
-            if isinstance(args[-1], tuple)
-            else args[-1].unique_vars
+            else (
+                args[-1][0].unique_vars
+                if isinstance(args[-1], tuple)
+                else args[-1].unique_vars
+            )
         )
 
         if len(variables) > 1:
@@ -525,3 +531,71 @@ class Forall(_Quantifier):
 
         self.connective_str = "∀"
         super().__init__(*args, **kwds)
+
+
+class High(_UnaryOperator):
+    r"""
+    A unary operator that represents a 'high' value of a feature.
+    """
+
+    def __init__(self, formula, initial_ref=0.5, initial_steepness=10.0, **kwds):
+        if not (0 < initial_ref < 1):
+            raise ValueError(
+                f"Initial reference must be in (0, 1), received {initial_ref}"
+            )
+
+        self.connective_str = "↑"
+        super().__init__(formula, **kwds)
+
+        kwds.setdefault("propositional", self.propositional)
+        init_args = {**kwds.get("activation", {}), **kwds}
+        self.neuron = _NodeActivation(**init_args)
+        self.neuron.reference = Parameter(torch.tensor(float(initial_ref)))
+        self.neuron.steepness = Parameter(torch.tensor(float(initial_steepness)))
+
+    def upward(self, **kwds) -> float:
+        if self.propositional:
+            groundings = {None}
+        else:
+            groundings = tuple(self.operands[0]._groundings)
+            for g in groundings:
+                if g not in self.grounding_table:
+                    self._add_groundings(g)
+
+        op_data = self.operands[0].get_data(*groundings)
+
+        result_bounds = torch.sigmoid(
+            self.neuron.steepness * (op_data - self.neuron.reference)
+        )
+
+        bounds_diff = self.neuron.aggregate_bounds(None, result_bounds)
+
+        if self.is_contradiction():
+            logging.info(f"↑ CONTRADICTION IN REFERENCE '{self.name}'")
+        return bounds_diff
+
+    def downward(self, **kwds) -> float:
+        if self.propositional:
+            groundings = {None}
+        else:
+            groundings = tuple(self._groundings)
+            for g in groundings:
+                if g not in self.operands[0]._groundings:
+                    self.operands[0]._add_groundings(g)
+
+        operator_bounds = self.get_data(*groundings)
+        epsilon = 1e-6
+        clamped_bounds = torch.clamp(operator_bounds, epsilon, 1 - epsilon)
+        logits = torch.logit(clamped_bounds)
+
+        operand_constraints = (
+            self.neuron.reference + (1 / self.neuron.steepness) * logits
+        )
+
+        bounds_diff = self.operands[0].neuron.aggregate_bounds(
+            None, operand_constraints
+        )
+
+        if self.operands[0].is_contradiction():
+            logging.info(f"↓ CONTRADICTION IN OPERAND '{self.operands[0].name}'")
+        return bounds_diff

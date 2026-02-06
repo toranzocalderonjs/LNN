@@ -106,6 +106,10 @@ param_symbols = {
     "weights": "w",
     "weights.grad": "w.g",
     "bias.grad": "β.g",
+    "reference": "r",
+    "steepness": "s",
+    "reference.grad": "r.g",
+    "steepness.grad": "s.g",
 }
 
 Model = TypeVar("Model")
