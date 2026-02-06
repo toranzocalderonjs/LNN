@@ -549,7 +549,7 @@ class High(_UnaryOperator):
 
         kwds.setdefault("propositional", self.propositional)
         init_args = {**kwds.get("activation", {}), **kwds}
-        self.neuron = _NodeActivation(**init_args)
+        self.neuron = _NodeActivation()(**init_args)
         self.neuron.reference = Parameter(torch.tensor(float(initial_ref)))
         self.neuron.steepness = Parameter(torch.tensor(float(initial_steepness)))
 
