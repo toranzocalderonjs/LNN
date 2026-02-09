@@ -538,12 +538,7 @@ class High(_UnaryOperator):
     A unary operator that represents a 'high' value of a feature.
     """
 
-    def __init__(self, formula, initial_ref=0.5, initial_steepness=10.0, **kwds):
-        if not (0 < initial_ref < 1):
-            raise ValueError(
-                f"Initial reference must be in (0, 1), received {initial_ref}"
-            )
-
+    def __init__(self, formula, initial_ref=0.0, initial_steepness=10.0, **kwds):
         self.connective_str = "↑"
         super().__init__(formula, **kwds)
 
