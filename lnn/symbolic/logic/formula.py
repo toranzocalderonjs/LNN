@@ -24,7 +24,7 @@ import numpy as np
 
 _utils.logger_setup()
 
-: typing.Dict[str, object] = {}
+subclasses: typing.Dict[str, object] = {}
 
 
 def _isinstance(obj, class_str) -> bool:
