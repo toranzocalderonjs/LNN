@@ -553,6 +553,10 @@ class High(_UnaryOperator):
         self.neuron.reference = Parameter(torch.tensor(float(initial_ref)))
         self.neuron.steepness = Parameter(torch.tensor(float(initial_steepness)))
 
+    @property
+    def effective_reference(self):
+        return torch.sigmoid(self.neuron.reference)
+
     def upward(self, **kwds) -> float:
         if self.propositional:
             groundings = {None}
@@ -563,9 +567,11 @@ class High(_UnaryOperator):
                     self._add_groundings(g)
 
         op_data = self.operands[0].get_data(*groundings)
+        
+        effective_ref = torch.sigmoid(self.neuron.reference)
 
         result_bounds = torch.sigmoid(
-            self.neuron.steepness * (op_data - self.neuron.reference)
+            self.neuron.steepness * (op_data - effective_ref)
         )
 
         bounds_diff = self.neuron.aggregate_bounds(None, result_bounds)
@@ -588,10 +594,11 @@ class High(_UnaryOperator):
         clamped_bounds = torch.clamp(operator_bounds, epsilon, 1 - epsilon)
         logits = torch.logit(clamped_bounds)
 
-        operand_constraints = (
-            self.neuron.reference + (1 / self.neuron.steepness) * logits
-        )
+        effective_ref = torch.sigmoid(self.neuron.reference)
 
+        operand_constraints = (
+            effective_ref + (1 / self.neuron.steepness) * logits
+        )
         bounds_diff = self.operands[0].neuron.aggregate_bounds(
             None, operand_constraints
         )
