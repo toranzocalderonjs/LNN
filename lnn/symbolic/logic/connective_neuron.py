@@ -180,6 +180,8 @@ class _ConnectiveNeuron(_ConnectiveFormula):
         definition of logic
 
         """
+        true_hinge = torch.tensor(0.0)
+        false_hinge = torch.tensor(0.0)
         a = self.neuron.alpha
         b = self.neuron.bias
         w = self.neuron.weights
