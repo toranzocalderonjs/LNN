@@ -533,7 +533,7 @@ class Forall(_Quantifier):
         super().__init__(*args, **kwds)
 
 
-class High(_UnaryOperator):
+class High(UnaryOperator):
     r"""
     A unary operator that represents a 'high' value of a feature.
     """
