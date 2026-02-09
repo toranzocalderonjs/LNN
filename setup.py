@@ -7,7 +7,6 @@
 import setuptools
 import pathlib
 
-
 setuptools.setup(
     name="lnn",
     version="1.0",
