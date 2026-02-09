@@ -23,7 +23,8 @@ import torch
 import numpy as np
 
 _utils.logger_setup()
-subclasses: typing.Dict[str, object] = {}
+
+: typing.Dict[str, object] = {}
 
 
 def _isinstance(obj, class_str) -> bool:
@@ -839,7 +840,7 @@ class Formula(ABC):
                                             root_var_remap,
                                         )
                                     )
-                                    if _isinstance(f, "Not") or _isinstance(f, "High")
+                                    if (_isinstance(f, "Not") or _isinstance(f, "High"))
                                     else ""
                                 )
                             )
@@ -871,6 +872,7 @@ class Formula(ABC):
                 if self.propositional
                 else f"{self.connective_str}{subformula_structure(self)}"
             )
+        else:
             return (
                 (
                     "("
