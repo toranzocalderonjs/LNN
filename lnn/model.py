@@ -608,18 +608,17 @@ class Model(nn.Module):
         if device is not None:
             target_device = torch.device(device)
 
-            # move model parameters
-            self.to(target_device)
-
-            # move data and labels
             for node in self.nodes.values():
-                # move bounds_table (data)
+
                 if hasattr(node, "neuron") and node.neuron is not None:
+                    if isinstance(node.neuron, nn.Module):
+                        node.neuron.to(target_device)
+
                     if hasattr(node.neuron, "bounds_table"):
                         bt = node.neuron.bounds_table
-                        if isinstance(bt, torch.Tensor):
+                        if isinstance(bt, torch.Tensor) and bt.device != target_device:
                             node.neuron.bounds_table = bt.to(target_device)
-                # move labels (targets)
+
                 if hasattr(node, "labels"):
                     if isinstance(node.labels, torch.Tensor):
                         node.labels = node.labels.to(target_device)
