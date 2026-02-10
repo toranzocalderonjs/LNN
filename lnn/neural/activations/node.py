@@ -157,10 +157,19 @@ class _NodeActivation(_NodeParameters):
         """
 
         *_, L, U, L_bounds, U_bounds = args if args else (self._get_state_vars(bounds))
+
+        device = L_bounds.device
+
         contradictions = bool_and(
             L_bounds > U_bounds,
-            bool_and(L == "1.0", U == "1.0").logical_not(),
-            bool_and(L == "5.0", U == "5.0").logical_not(),
+            bool_and(
+                torch.as_tensor(L == "1.0", device=device),
+                torch.as_tensor(U == "1.0", device=device),
+            ).logical_not(),
+            bool_and(
+                torch.as_tensor(L == "5.0", device=device),
+                torch.as_tensor(U == "5.0", device=device),
+            ).logical_not(),
         )
         return contradictions
 
