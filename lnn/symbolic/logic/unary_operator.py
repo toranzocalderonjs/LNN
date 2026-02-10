@@ -533,12 +533,12 @@ class Forall(_Quantifier):
         super().__init__(*args, **kwds)
 
 
-class High(UnaryOperator):
+class High(_UnaryOperator):
     r"""
     A unary operator that represents a 'high' value of a feature.
     """
 
-    def __init__(self, formula, initial_ref=0.0, initial_steepness=10.0, **kwds):
+    def __init__(self, formula, initial_ref=0.0, initial_steepness=20.0, **kwds):
         self.connective_str = "↑"
         super().__init__(formula, **kwds)
 
