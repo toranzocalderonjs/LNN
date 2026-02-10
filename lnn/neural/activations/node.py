@@ -132,7 +132,7 @@ class _NodeActivation(_NodeParameters):
         torch.Tensor, np.ndarray, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor
     ]:
         bounds = self.get_data() if bounds is None else bounds
-        regions = self.output_regions(bounds).numpy().astype(dtype="<U3")
+        regions = self.output_regions(bounds).detach().cpu().numpy().astype(dtype="<U3")
         L, U = regions[..., 0], regions[..., 1]
         result = np.zeros_like(L, dtype=float).astype(dtype="<U3")
         L_bounds, U_bounds = bounds[..., 0], bounds[..., 1]
