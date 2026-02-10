@@ -20,15 +20,19 @@ class LukasiewiczTransparent(_StaticActivation):
     def _and_downward(
         self, operator_bounds: torch.Tensor, operand_bounds: torch.Tensor
     ):
+        dev = self.bias.device
+
         f_inv = (
             operator_bounds
             + (
                 (operator_bounds <= 0).float()
-                * torch.stack([self.bias - self.weights.sum(), torch.tensor(0.0)])
+                * torch.stack(
+                    [self.bias - self.weights.sum(), torch.tensor(0.0, device=dev)]
+                )
             )
             + (
                 (operator_bounds >= 1).float()
-                * torch.stack([torch.tensor(0.0), self.bias - 1])
+                * torch.stack([torch.tensor(0.0, device=dev), self.bias - 1])
             )
         )
         input_terms = (1 - operand_bounds) * self.weights
