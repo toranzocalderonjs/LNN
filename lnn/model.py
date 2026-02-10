@@ -529,7 +529,12 @@ class Model(nn.Module):
         r"""Performs downward inference for each node in the model from root to leaf."""
         return self.infer(Direction.DOWNWARD, **kwds)
 
-    def train(self, losses: Union[Loss, List[Loss], Dict[List[Loss], float]], **kwds):
+    def train(
+        self,
+        losses: Union[Loss, List[Loss], Dict[List[Loss], float]],
+        device=None,
+        **kwds,
+    ):
         r"""Train the model.
 
         Reasons across the model until convergence using the standard inference
@@ -550,6 +555,8 @@ class Model(nn.Module):
             Number of training epochs. If unspecified, trains for 3e2 epochs.
         pbar : bool, optional
             Prints out a tqdm training progress bar. If unspecified, does not print out.
+        device : bool, optional
+            ...
 
         Returns
         -------
@@ -598,6 +605,29 @@ class Model(nn.Module):
         ```
 
         """
+        if device is not None:
+            target_device = torch.device(device)
+
+            # move model parameters
+            self.to(target_device)
+
+            # move data and labels
+            for node in self.nodes.values():
+                # move bounds_table (data)
+                if hasattr(node, "neuron") and node.neuron is not None:
+                    if hasattr(node.neuron, "bounds_table"):
+                        bt = node.neuron.bounds_table
+                        if isinstance(bt, torch.Tensor):
+                            node.neuron.bounds_table = bt.to(target_device)
+                # move labels (targets)
+                if hasattr(node, "labels"):
+                    if isinstance(node.labels, torch.Tensor):
+                        node.labels = node.labels.to(target_device)
+                    elif isinstance(node.labels, dict):
+                        for k, v in node.labels.items():
+                            if isinstance(v, torch.Tensor):
+                                node.labels[k] = v.to(target_device)
+
         optimizer = kwds.get(
             "optimizer",
             torch.optim.Adam(
